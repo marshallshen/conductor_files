@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Conductor Files Installation Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/yourusername/conductor_files/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/marshallshen/conductor_files/main/install.sh | bash
 
 set -e
 
@@ -14,7 +14,10 @@ NC='\033[0m' # No Color
 # Configuration
 CONDUCTOR_DIR="${HOME}/.conductor_files"
 CLAUDE_DIR="${HOME}/.claude"
-REPO_URL="https://github.com/yourusername/conductor_files.git"
+GITHUB_USER="marshallshen"
+GITHUB_REPO="conductor_files"
+GITHUB_BRANCH="main"
+TARBALL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
 
 # Helper functions
 print_header() {
@@ -64,7 +67,7 @@ ask_yes_no() {
 # Main installation steps
 print_header
 
-# Step 1: Clone or update conductor_files
+# Step 1: Download or update conductor_files
 echo "Step 1: Setting up conductor_files repository"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -72,17 +75,40 @@ if [ -d "$CONDUCTOR_DIR" ]; then
     print_info "Found existing conductor_files at $CONDUCTOR_DIR"
 
     if ask_yes_no "Update existing installation?"; then
-        cd "$CONDUCTOR_DIR"
-        print_info "Pulling latest changes..."
-        git pull
-        print_success "Updated conductor_files"
+        print_info "Downloading latest version..."
+        TEMP_DIR=$(mktemp -d)
+
+        # Download and extract tarball
+        curl -fsSL "$TARBALL_URL" | tar -xz -C "$TEMP_DIR"
+
+        # Backup existing installation
+        BACKUP_DIR="${CONDUCTOR_DIR}.backup.$(date +%s)"
+        mv "$CONDUCTOR_DIR" "$BACKUP_DIR"
+
+        # Move new files
+        mv "$TEMP_DIR/${GITHUB_REPO}-${GITHUB_BRANCH}" "$CONDUCTOR_DIR"
+
+        # Cleanup
+        rm -rf "$TEMP_DIR"
+
+        print_success "Updated conductor_files (backup at $BACKUP_DIR)"
     else
         print_info "Skipping update"
     fi
 else
-    print_info "Cloning conductor_files to $CONDUCTOR_DIR..."
-    git clone "$REPO_URL" "$CONDUCTOR_DIR"
-    print_success "Cloned conductor_files"
+    print_info "Downloading conductor_files to $CONDUCTOR_DIR..."
+    TEMP_DIR=$(mktemp -d)
+
+    # Download and extract tarball
+    curl -fsSL "$TARBALL_URL" | tar -xz -C "$TEMP_DIR"
+
+    # Move to final location
+    mv "$TEMP_DIR/${GITHUB_REPO}-${GITHUB_BRANCH}" "$CONDUCTOR_DIR"
+
+    # Cleanup
+    rm -rf "$TEMP_DIR"
+
+    print_success "Downloaded conductor_files"
 fi
 
 echo ""
@@ -205,8 +231,9 @@ echo ""
 echo "  1. Read the philosophy:"
 echo "     ${BLUE}cat ~/.conductor_files/WHY.md${NC}"
 echo ""
-echo "  2. Launch Claude Code and try a skill:"
-echo "     ${BLUE}/commit-with-context${NC}"
+echo "  2. Launch Claude Code and try the skills:"
+echo "     ${BLUE}/save-context${NC} - Save your work session"
+echo "     ${BLUE}/resume-context${NC} - Resume where you left off"
 echo ""
 echo "  3. Use a role-based agent:"
 echo "     ${BLUE}\"Use the unit-tester agent to create tests for...\"${NC}"
@@ -216,8 +243,8 @@ echo "     ${BLUE}cat ~/.conductor_files/hooks/README.md${NC}"
 echo ""
 echo "  5. Customize for your workflow:"
 echo "     ${BLUE}cd ~/.conductor_files${NC}"
-echo "     ${BLUE}git remote set-url origin https://github.com/yourusername/conductor_files.git${NC}"
-echo "     ${BLUE}# Make changes, commit, and push${NC}"
+echo "     ${BLUE}# Edit skills, agents, and hooks${NC}"
+echo "     ${BLUE}# Fork the repo to share your configurations${NC}"
 echo ""
 
 print_success "Happy conducting! 🎵"
