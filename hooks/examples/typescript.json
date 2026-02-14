@@ -1,0 +1,48 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit:**/*.{ts,tsx,js,jsx}",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "prettier --write {file_path}",
+            "description": "Format TypeScript/JavaScript files with Prettier"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*.{ts,tsx}",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "eslint --fix {file_path}",
+            "description": "Lint and auto-fix TypeScript files"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:package.json",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm install",
+            "description": "Update package-lock.json after package.json changes"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit:tsconfig.json",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️ Editing TypeScript config - verify changes with tsc --noEmit'",
+            "description": "Warn when editing TypeScript config"
+          }
+        ]
+      }
+    ]
+  }
+}

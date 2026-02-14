@@ -1,0 +1,68 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit:**/*.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "black {file_path}",
+            "description": "Format Python files with Black"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "isort {file_path}",
+            "description": "Sort Python imports with isort"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mypy {file_path}",
+            "description": "Type check with mypy"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:requirements.txt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pip install -r requirements.txt",
+            "description": "Install dependencies after requirements.txt changes"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:pyproject.toml",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry install",
+            "description": "Update dependencies after pyproject.toml changes"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit:**/__init__.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'ℹ️ Editing __init__.py - ensure exports are intentional'",
+            "description": "Warn when editing package init files"
+          }
+        ]
+      }
+    ]
+  }
+}

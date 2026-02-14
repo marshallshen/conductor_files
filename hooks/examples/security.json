@@ -1,0 +1,81 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit:.env*",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Don't edit .env files directly. Use .env.example instead and update your local .env manually."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*secret*",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Blocked edit to file containing 'secret' in name. Verify this is not a sensitive file."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*password*",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Blocked edit to file containing 'password' in name. Verify this is not a sensitive file."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*credential*",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Blocked edit to file containing 'credential' in name. Verify this is not a sensitive file."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*.pem",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Blocked edit to PEM file. These typically contain private keys."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit:**/*.key",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Blocked edit to .key file. These typically contain private keys."
+          }
+        ]
+      },
+      {
+        "matcher": "Write:.env*",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "⚠️ Don't create .env files with AI. Create them manually to avoid accidentally committing secrets."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit:**/*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git diff {file_path} | grep -E '(api_key|secret|password|token|private_key)' && echo '⚠️ Warning: Potential secret detected in changes!' || true",
+            "description": "Scan for potential secrets in changed files"
+          }
+        ]
+      }
+    ]
+  }
+}
