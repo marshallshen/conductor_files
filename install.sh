@@ -2,10 +2,11 @@
 # Conductor Files Installation Script
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/marshallshen/conductor_files/main/install.sh | bash
+#   1. Clone the repository:
+#      git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files
 #
-# Custom fork:
-#   curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/conductor_files/main/install.sh | GITHUB_USER=YOUR_USERNAME bash
+#   2. Run the installer:
+#      ~/.conductor_files/install.sh
 
 set -e
 
@@ -19,10 +20,6 @@ NC='\033[0m' # No Color
 # Configuration
 CONDUCTOR_DIR="${HOME}/.conductor_files"
 CLAUDE_DIR="${HOME}/.claude"
-GITHUB_USER="${GITHUB_USER:-marshallshen}"
-GITHUB_REPO="${GITHUB_REPO:-conductor_files}"
-GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
-TARBALL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
 
 # Helper functions
 print_header() {
@@ -72,49 +69,20 @@ ask_yes_no() {
 # Main installation steps
 print_header
 
-# Step 1: Download or update conductor_files
-echo "Step 1: Setting up conductor_files repository"
+# Step 1: Verify conductor_files directory exists
+echo "Step 1: Verifying conductor_files installation"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if [ -d "$CONDUCTOR_DIR" ]; then
-    print_info "Found existing conductor_files at $CONDUCTOR_DIR"
-
-    if ask_yes_no "Update existing installation?"; then
-        print_info "Downloading latest version..."
-        TEMP_DIR=$(mktemp -d)
-
-        # Download and extract tarball
-        curl -fsSL "$TARBALL_URL" | tar -xz -C "$TEMP_DIR"
-
-        # Backup existing installation
-        BACKUP_DIR="${CONDUCTOR_DIR}.backup.$(date +%s)"
-        mv "$CONDUCTOR_DIR" "$BACKUP_DIR"
-
-        # Move new files
-        mv "$TEMP_DIR/${GITHUB_REPO}-${GITHUB_BRANCH}" "$CONDUCTOR_DIR"
-
-        # Cleanup
-        rm -rf "$TEMP_DIR"
-
-        print_success "Updated conductor_files (backup at $BACKUP_DIR)"
-    else
-        print_info "Skipping update"
-    fi
-else
-    print_info "Downloading conductor_files to $CONDUCTOR_DIR..."
-    TEMP_DIR=$(mktemp -d)
-
-    # Download and extract tarball
-    curl -fsSL "$TARBALL_URL" | tar -xz -C "$TEMP_DIR"
-
-    # Move to final location
-    mv "$TEMP_DIR/${GITHUB_REPO}-${GITHUB_BRANCH}" "$CONDUCTOR_DIR"
-
-    # Cleanup
-    rm -rf "$TEMP_DIR"
-
-    print_success "Downloaded conductor_files"
+if [ ! -d "$CONDUCTOR_DIR" ]; then
+    print_error "conductor_files not found at $CONDUCTOR_DIR"
+    echo ""
+    echo "Please clone the repository first:"
+    echo "  ${BLUE}git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files${NC}"
+    echo ""
+    exit 1
 fi
+
+print_success "Found conductor_files at $CONDUCTOR_DIR"
 
 echo ""
 
@@ -246,10 +214,8 @@ echo ""
 echo "  4. Explore hooks:"
 echo "     ${BLUE}cat ~/.conductor_files/hooks/README.md${NC}"
 echo ""
-echo "  5. Customize for your workflow:"
-echo "     ${BLUE}cd ~/.conductor_files${NC}"
-echo "     ${BLUE}# Edit skills, agents, and hooks${NC}"
-echo "     ${BLUE}# Fork the repo to share your configurations${NC}"
+echo "  5. Update conductor_files:"
+echo "     ${BLUE}cd ~/.conductor_files && git pull${NC}"
 echo ""
 
 print_success "Happy conducting! 🎵"

@@ -16,10 +16,14 @@ Just as a conductor doesn't play instruments but shapes how an orchestra perform
 
 ## Installation
 
-Install with a single command:
+Two simple steps:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marshalshen/conductor_files/main/install.sh | bash
+# 1. Clone the repository
+git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files
+
+# 2. Run the installer
+~/.conductor_files/install.sh
 ```
 
 This installs:
