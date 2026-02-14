@@ -2,11 +2,10 @@
 # Conductor Files Installation Script
 #
 # Usage:
-#   1. Clone the repository:
-#      git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files
+#   Run the installer (will clone if needed):
+#      bash install.sh
 #
-#   2. Run the installer:
-#      ~/.conductor_files/install.sh
+# Note: If ~/.conductor_files already exists, you'll be asked to confirm before overriding.
 
 set -e
 
@@ -69,20 +68,42 @@ ask_yes_no() {
 # Main installation steps
 print_header
 
-# Step 1: Verify conductor_files directory exists
+# Step 1: Handle existing conductor_files directory
 echo "Step 1: Verifying conductor_files installation"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if [ ! -d "$CONDUCTOR_DIR" ]; then
-    print_error "conductor_files not found at $CONDUCTOR_DIR"
-    echo ""
-    echo "Please clone the repository first:"
-    echo "  ${BLUE}git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files${NC}"
-    echo ""
-    exit 1
+if [ -d "$CONDUCTOR_DIR" ]; then
+    print_warning "Found existing directory at $CONDUCTOR_DIR"
+
+    if ask_yes_no "Do you want to remove and re-clone the repository?"; then
+        print_info "Removing existing directory..."
+        rm -rf "$CONDUCTOR_DIR"
+
+        print_info "Cloning conductor_files repository..."
+        if git clone https://github.com/marshallshen/conductor_files.git "$CONDUCTOR_DIR"; then
+            print_success "Successfully cloned conductor_files"
+        else
+            print_error "Failed to clone repository"
+            exit 1
+        fi
+    else
+        print_info "Using existing conductor_files directory"
+    fi
+else
+    print_info "Cloning conductor_files repository..."
+    if git clone https://github.com/marshallshen/conductor_files.git "$CONDUCTOR_DIR"; then
+        print_success "Successfully cloned conductor_files"
+    else
+        print_error "Failed to clone repository"
+        echo ""
+        echo "Please clone the repository manually:"
+        echo "  ${BLUE}git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files${NC}"
+        echo ""
+        exit 1
+    fi
 fi
 
-print_success "Found conductor_files at $CONDUCTOR_DIR"
+print_success "conductor_files ready at $CONDUCTOR_DIR"
 
 echo ""
 
