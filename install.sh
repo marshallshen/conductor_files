@@ -2,12 +2,17 @@
 # Conductor Files Installation Script
 #
 # Usage:
-#   Run the installer (will clone if needed):
-#      bash install.sh
+#   bash <(curl -fsSL https://raw.githubusercontent.com/marshallshen/conductor_files/main/install.sh)
 #
-# Note: If ~/.conductor_files already exists, you'll be asked to confirm before overriding.
+# Or run locally:
+#   bash install.sh
+#
+# This script will:
+#   1. Clean up existing ~/.conductor_files and symlinks
+#   2. Clone fresh repository
+#   3. Create symlinks to ~/.claude/
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -19,6 +24,7 @@ NC='\033[0m' # No Color
 # Configuration
 CONDUCTOR_DIR="${HOME}/.conductor_files"
 CLAUDE_DIR="${HOME}/.claude"
+REPO_URL="https://github.com/marshallshen/conductor_files.git"
 
 # Helper functions
 print_header() {
@@ -68,47 +74,95 @@ ask_yes_no() {
 # Main installation steps
 print_header
 
-# Step 1: Handle existing conductor_files directory
-echo "Step 1: Verifying conductor_files installation"
+# Step 1: Cleanup existing installation
+echo "Step 1: Cleanup existing installation"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+NEEDS_CLEANUP=false
+
+# Check for existing conductor_files
 if [ -d "$CONDUCTOR_DIR" ]; then
-    print_warning "Found existing directory at $CONDUCTOR_DIR"
-
-    if ask_yes_no "Do you want to remove and re-clone the repository?"; then
-        print_info "Removing existing directory..."
-        rm -rf "$CONDUCTOR_DIR"
-
-        print_info "Cloning conductor_files repository..."
-        if git clone https://github.com/marshallshen/conductor_files.git "$CONDUCTOR_DIR"; then
-            print_success "Successfully cloned conductor_files"
-        else
-            print_error "Failed to clone repository"
-            exit 1
-        fi
-    else
-        print_info "Using existing conductor_files directory"
-    fi
-else
-    print_info "Cloning conductor_files repository..."
-    if git clone https://github.com/marshallshen/conductor_files.git "$CONDUCTOR_DIR"; then
-        print_success "Successfully cloned conductor_files"
-    else
-        print_error "Failed to clone repository"
-        echo ""
-        echo "Please clone the repository manually:"
-        echo "  ${BLUE}git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files${NC}"
-        echo ""
-        exit 1
-    fi
+    print_warning "Found existing conductor_files at $CONDUCTOR_DIR"
+    NEEDS_CLEANUP=true
 fi
 
-print_success "conductor_files ready at $CONDUCTOR_DIR"
+# Check for existing symlinks
+if [ -L "${CLAUDE_DIR}/skills" ]; then
+    print_warning "Found existing skills symlink at ~/.claude/skills"
+    NEEDS_CLEANUP=true
+fi
+
+if [ -L "${CLAUDE_DIR}/agents" ]; then
+    print_warning "Found existing agents symlink at ~/.claude/agents"
+    NEEDS_CLEANUP=true
+fi
+
+# Check for non-symlink directories that need backup
+SKILLS_DIR="${CLAUDE_DIR}/skills"
+AGENTS_DIR="${CLAUDE_DIR}/agents"
+SKILLS_BACKUP=""
+AGENTS_BACKUP=""
+
+if [ -e "$SKILLS_DIR" ] && [ ! -L "$SKILLS_DIR" ]; then
+    SKILLS_BACKUP="${CLAUDE_DIR}/skills.backup.$(date +%s)"
+    print_warning "Found existing skills directory (not a symlink)"
+    NEEDS_CLEANUP=true
+fi
+
+if [ -e "$AGENTS_DIR" ] && [ ! -L "$AGENTS_DIR" ]; then
+    AGENTS_BACKUP="${CLAUDE_DIR}/agents.backup.$(date +%s)"
+    print_warning "Found existing agents directory (not a symlink)"
+    NEEDS_CLEANUP=true
+fi
+
+if [ "$NEEDS_CLEANUP" = true ]; then
+    echo ""
+    if ask_yes_no "Remove existing installation and install fresh?"; then
+        # Backup non-symlink directories
+        if [ -n "$SKILLS_BACKUP" ]; then
+            mv "$SKILLS_DIR" "$SKILLS_BACKUP"
+            print_success "Backed up skills to $SKILLS_BACKUP"
+        fi
+
+        if [ -n "$AGENTS_BACKUP" ]; then
+            mv "$AGENTS_DIR" "$AGENTS_BACKUP"
+            print_success "Backed up agents to $AGENTS_BACKUP"
+        fi
+
+        # Remove symlinks
+        [ -L "${CLAUDE_DIR}/skills" ] && rm "${CLAUDE_DIR}/skills"
+        [ -L "${CLAUDE_DIR}/agents" ] && rm "${CLAUDE_DIR}/agents"
+
+        # Remove conductor_files
+        if [ -d "$CONDUCTOR_DIR" ]; then
+            rm -rf "$CONDUCTOR_DIR"
+            print_success "Removed existing conductor_files"
+        fi
+    else
+        print_error "Installation cancelled"
+        exit 1
+    fi
+else
+    print_info "No existing installation found"
+fi
 
 echo ""
 
-# Step 2: Create ~/.claude directory if it doesn't exist
-echo "Step 2: Preparing Claude Code directory"
+# Step 2: Clone fresh repository
+echo "Step 2: Clone conductor_files repository"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if git clone "$REPO_URL" "$CONDUCTOR_DIR"; then
+    print_success "Successfully cloned conductor_files to $CONDUCTOR_DIR"
+else
+    print_error "Failed to clone repository"
+    exit 1
+fi
+
+echo ""
+
+# Step 3: Create ~/.claude directory if needed
+echo "Step 3: Preparing Claude Code directory"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ ! -d "$CLAUDE_DIR" ]; then
@@ -120,67 +174,19 @@ fi
 
 echo ""
 
-# Step 3: Backup and symlink skills
-echo "Step 3: Configuring skills"
+# Step 4: Create symlinks
+echo "Step 4: Creating symlinks"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-SKILLS_DIR="${CLAUDE_DIR}/skills"
-SKILLS_BACKUP="${CLAUDE_DIR}/skills.backup.$(date +%s)"
+ln -s "${CONDUCTOR_DIR}/skills" "${CLAUDE_DIR}/skills"
+print_success "Created symlink: ~/.claude/skills → ~/.conductor_files/skills"
 
-if [ -e "$SKILLS_DIR" ] && [ ! -L "$SKILLS_DIR" ]; then
-    # Skills directory exists and is not a symlink - backup
-    print_warning "Found existing skills directory"
-
-    if ask_yes_no "Backup existing skills to $SKILLS_BACKUP?"; then
-        mv "$SKILLS_DIR" "$SKILLS_BACKUP"
-        print_success "Backed up skills to $SKILLS_BACKUP"
-    else
-        print_error "Cannot proceed without backing up existing skills"
-        exit 1
-    fi
-elif [ -L "$SKILLS_DIR" ]; then
-    # Already a symlink - remove it
-    rm "$SKILLS_DIR"
-    print_info "Removed existing skills symlink"
-fi
-
-# Create symlink
-ln -s "${CONDUCTOR_DIR}/skills" "$SKILLS_DIR"
-print_success "Symlinked skills: ~/.claude/skills → ~/.conductor_files/skills"
+ln -s "${CONDUCTOR_DIR}/agents" "${CLAUDE_DIR}/agents"
+print_success "Created symlink: ~/.claude/agents → ~/.conductor_files/agents"
 
 echo ""
 
-# Step 4: Backup and symlink agents
-echo "Step 4: Configuring agents"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-AGENTS_DIR="${CLAUDE_DIR}/agents"
-AGENTS_BACKUP="${CLAUDE_DIR}/agents.backup.$(date +%s)"
-
-if [ -e "$AGENTS_DIR" ] && [ ! -L "$AGENTS_DIR" ]; then
-    # Agents directory exists and is not a symlink - backup
-    print_warning "Found existing agents directory"
-
-    if ask_yes_no "Backup existing agents to $AGENTS_BACKUP?"; then
-        mv "$AGENTS_DIR" "$AGENTS_BACKUP"
-        print_success "Backed up agents to $AGENTS_BACKUP"
-    else
-        print_error "Cannot proceed without backing up existing agents"
-        exit 1
-    fi
-elif [ -L "$AGENTS_DIR" ]; then
-    # Already a symlink - remove it
-    rm "$AGENTS_DIR"
-    print_info "Removed existing agents symlink"
-fi
-
-# Create symlink
-ln -s "${CONDUCTOR_DIR}/agents" "$AGENTS_DIR"
-print_success "Symlinked agents: ~/.claude/agents → ~/.conductor_files/agents"
-
-echo ""
-
-# Step 5: Optionally configure hooks
+# Step 5: Configure hooks (optional)
 echo "Step 5: Configuring hooks (optional)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -196,7 +202,7 @@ if [ -f "$SETTINGS_FILE" ]; then
 else
     if ask_yes_no "Create default hooks configuration?"; then
         cp "$HOOKS_SETTINGS" "$SETTINGS_FILE"
-        print_success "Created ~/.claude/settings.json with base hooks configuration"
+        print_success "Created ~/.claude/settings.json with hooks configuration"
         print_info "You can add more hooks from ${CONDUCTOR_DIR}/hooks/examples/"
     else
         print_info "Skipping hooks configuration"
@@ -213,10 +219,17 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 print_info "What's installed:"
-echo "  - Shared skills: ~/.claude/skills/ → ~/.conductor_files/skills/"
-echo "  - Shared agents: ~/.claude/agents/ → ~/.conductor_files/agents/"
+echo "  - conductor_files: ~/.conductor_files/"
+echo "  - skills symlink: ~/.claude/skills/ → ~/.conductor_files/skills/"
+echo "  - agents symlink: ~/.claude/agents/ → ~/.conductor_files/agents/"
 if [ -f "$SETTINGS_FILE" ]; then
-    echo "  - Hooks config: ~/.claude/settings.json"
+    echo "  - hooks config: ~/.claude/settings.json"
+fi
+if [ -n "$SKILLS_BACKUP" ]; then
+    echo "  - skills backup: $SKILLS_BACKUP"
+fi
+if [ -n "$AGENTS_BACKUP" ]; then
+    echo "  - agents backup: $AGENTS_BACKUP"
 fi
 echo ""
 
@@ -230,7 +243,7 @@ echo "     ${BLUE}/save-context${NC} - Save your work session"
 echo "     ${BLUE}/resume-context${NC} - Resume where you left off"
 echo ""
 echo "  3. Use a role-based agent:"
-echo "     ${BLUE}\"Use the unit-tester agent to create tests for...\"${NC}"
+echo "     ${BLUE}\"Use the blog-writer agent to create a post...\"${NC}"
 echo ""
 echo "  4. Explore hooks:"
 echo "     ${BLUE}cat ~/.conductor_files/hooks/README.md${NC}"

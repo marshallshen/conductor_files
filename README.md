@@ -16,22 +16,32 @@ Just as a conductor doesn't play instruments but shapes how an orchestra perform
 
 ## Installation
 
-Two simple steps:
+### One-line install (recommended)
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files
+bash <(curl -fsSL https://raw.githubusercontent.com/marshallshen/conductor_files/main/install.sh)
+```
 
-# 2. Run the installer
+### Or clone first, then install
+
+```bash
+git clone https://github.com/marshallshen/conductor_files.git ~/.conductor_files
 ~/.conductor_files/install.sh
 ```
 
-This installs:
-- **Skills**: `/save-context`, `/resume-context` - Save and resume work sessions
-- **Agents**: `unit-tester`, `security-reviewer`, `ui-ux-reviewer`
-- **Hooks**: Auto-formatting, security blocks, quality gates
+### What gets installed
 
-Everything symlinks to `~/.claude/` and works immediately with Claude Code
+The installer will:
+1. **Clean up** existing `~/.conductor_files` and symlinks (backs up your existing skills/agents)
+2. **Clone fresh** repository to `~/.conductor_files`
+3. **Create symlinks** from `~/.claude/` to your conductor_files
+
+You get:
+- **Skills**: `/save-context`, `/resume-context` - Save and resume work sessions
+- **Agents**: `blog-writer`, `unit-tester`, `security-reviewer`, `ui-ux-reviewer`
+- **Hooks**: Auto-formatting, security blocks, quality gates (optional)
+
+Everything works immediately with Claude Code
 
 ## What's Next
 
