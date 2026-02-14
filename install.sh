@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Conductor Files Installation Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/marshallshen/conductor_files/main/install.sh | bash
+#
+# Usage:
+#   curl -fsSL https://raw.githubusercontent.com/marshallshen/conductor_files/main/install.sh | bash
+#
+# Custom fork:
+#   curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/conductor_files/main/install.sh | GITHUB_USER=YOUR_USERNAME bash
 
 set -e
 
@@ -14,9 +19,9 @@ NC='\033[0m' # No Color
 # Configuration
 CONDUCTOR_DIR="${HOME}/.conductor_files"
 CLAUDE_DIR="${HOME}/.claude"
-GITHUB_USER="marshallshen"
-GITHUB_REPO="conductor_files"
-GITHUB_BRANCH="main"
+GITHUB_USER="${GITHUB_USER:-marshallshen}"
+GITHUB_REPO="${GITHUB_REPO:-conductor_files}"
+GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
 TARBALL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
 
 # Helper functions
