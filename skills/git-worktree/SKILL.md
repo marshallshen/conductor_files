@@ -150,8 +150,46 @@ Next steps:
 3. Start working on the feature in isolation
 
 Track progress with: /git-worktree status
-Update status with: /git-worktree update feature-name <status>
+Update status with: /git-worktree update feature-name $STATUS
 ```
+
+### 9. Offer Plan Mode
+
+After showing the success message, ask the user if they want to create an implementation plan:
+
+```
+Would you like me to enter plan mode to create an implementation plan for this feature?
+
+If yes, I'll:
+- Explore the codebase to understand the context
+- Design an implementation approach for: "Implement JWT authentication"
+- Create a detailed plan that can be executed in the worktree
+- Save the plan for reference when you start work in the new worktree
+
+Enter plan mode? (y/n)
+```
+
+**If user says yes:**
+1. Use the EnterPlanMode tool to enter plan mode
+2. In the plan mode prompt, include:
+   - The feature name and task description from the worktree creation
+   - Context that this plan will be executed in a separate worktree
+   - The worktree location for reference
+3. Example plan mode prompt:
+   ```
+   Plan the implementation for: Implement JWT authentication
+
+   Context:
+   - This will be implemented in a separate worktree at: /Users/mshen/Projects/conductor_files-feature-name/
+   - Branch: feature/feature-name
+   - This is a fresh worktree for focused development
+
+   Please explore the codebase and create a detailed implementation plan.
+   ```
+
+**If user says no:**
+- Acknowledge and remind them they can always enter plan mode later when working in the worktree
+- Show them they can check progress with `/git-worktree status`
 
 ## Process for LIST Command
 
@@ -574,7 +612,25 @@ This may have been removed manually. Clean up metadata? (y/N)
 
 ## Example Workflow
 
-### Scenario: Parallel Development on Multiple Features
+### Scenario 1: Create Worktree with Plan Mode
+
+```bash
+# Create a worktree and plan the implementation
+/git-worktree create user-auth "Implement JWT authentication with refresh tokens"
+
+# Skill asks: "Would you like me to enter plan mode to create an implementation plan?"
+# User responds: yes
+
+# Agent enters plan mode, explores codebase, creates implementation plan
+# Plan is created and ready for execution
+
+# Later, in the worktree directory:
+cd ../conductor_files-user-auth/
+# Use the plan to implement the feature
+# Update status as you progress
+```
+
+### Scenario 2: Parallel Development on Multiple Features
 
 ```bash
 # Create worktrees for three separate features
