@@ -173,22 +173,42 @@ Enter plan mode? (y/n)
 1. Use the EnterPlanMode tool to enter plan mode
 2. In the plan mode prompt, include:
    - The feature name and task description from the worktree creation
-   - Context that this plan will be executed in a separate worktree
-   - The worktree location for reference
+   - **CRITICAL**: Emphasize that implementation will happen in the worktree directory, not the base directory
+   - The worktree location where development will occur
+   - That the plan should be saved in the worktree directory for easy access
 3. Example plan mode prompt:
    ```
    Plan the implementation for: Implement JWT authentication
 
-   Context:
-   - This will be implemented in a separate worktree at: /Users/mshen/Projects/conductor_files-feature-name/
+   IMPORTANT CONTEXT:
+   - Implementation will happen in the worktree directory: /Users/mshen/Projects/conductor_files-feature-name/
    - Branch: feature/feature-name
-   - This is a fresh worktree for focused development
+   - This is a fresh worktree for isolated development
+   - ALL development work must happen in the worktree directory, NOT the base repository
+   - After planning, save the plan to the worktree directory so it's available when development starts
 
    Please explore the codebase and create a detailed implementation plan.
+   When saving the plan, save it to: /Users/mshen/Projects/conductor_files-feature-name/PLAN.md
+   ```
+
+4. **After plan mode completes**, remind the user:
+   ```
+   ✅ Implementation plan created!
+
+   📋 Plan saved to: /Users/mshen/Projects/conductor_files-feature-name/PLAN.md
+
+   Next steps to start development:
+   1. Open a NEW terminal or Claude Code session
+   2. cd /Users/mshen/Projects/conductor_files-feature-name/
+   3. Start implementing (the plan will be available in PLAN.md)
+   4. All work happens in the worktree - do NOT work in the base directory
+
+   Update progress with: /git-worktree update feature-name in_progress
    ```
 
 **If user says no:**
 - Acknowledge and remind them they can always enter plan mode later when working in the worktree
+- **Emphasize**: When they do start work, they must open a new session in the worktree directory
 - Show them they can check progress with `/git-worktree status`
 
 ## Process for LIST Command
@@ -577,6 +597,27 @@ This may have been removed manually. Clean up metadata? (y/N)
 
 ## Best Practices
 
+### Development Workflow (CRITICAL)
+
+**⚠️ ALWAYS work in the worktree directory, NEVER in the base directory:**
+
+- **Worktree directory**: `/Users/mshen/Projects/conductor_files-feature-name/` ✅ Work here
+- **Base directory**: `/Users/mshen/Projects/conductor_files/` ❌ Do NOT develop here
+
+**Proper workflow:**
+1. Create worktree with `/git-worktree create feature-name`
+2. Open NEW terminal/Claude Code session
+3. `cd ../conductor_files-feature-name/` (change to worktree)
+4. Start development in the worktree directory
+5. All commits, edits, and changes happen in the worktree
+6. Never switch back to base directory for feature work
+
+**Why this matters:**
+- Working in base directory defeats the purpose of isolation
+- Changes in base directory affect other worktrees
+- Base directory should only be for managing worktrees (create, status, cleanup)
+- Each worktree is a separate workspace - treat it as such
+
 ### Naming Conventions
 - **Use descriptive names**: `user-authentication` not `ua`
 - **Use kebab-case**: `blog-post-feature` not `blog_post_feature`
@@ -615,19 +656,26 @@ This may have been removed manually. Clean up metadata? (y/N)
 ### Scenario 1: Create Worktree with Plan Mode
 
 ```bash
-# Create a worktree and plan the implementation
+# In base directory: /Users/mshen/Projects/conductor_files/
 /git-worktree create user-auth "Implement JWT authentication with refresh tokens"
 
 # Skill asks: "Would you like me to enter plan mode to create an implementation plan?"
 # User responds: yes
 
 # Agent enters plan mode, explores codebase, creates implementation plan
-# Plan is created and ready for execution
+# Plan is saved to: ../conductor_files-user-auth/PLAN.md
 
-# Later, in the worktree directory:
+# ⚠️ IMPORTANT: Open NEW Claude Code session in worktree directory
+# Open new terminal/session:
 cd ../conductor_files-user-auth/
-# Use the plan to implement the feature
-# Update status as you progress
+
+# ✅ NOW in worktree directory - all development happens here
+# Read PLAN.md and start implementing
+# Make commits, edits, changes - all in this directory
+# NEVER go back to base directory for development work
+
+# From base directory (different session), update status:
+/git-worktree update user-auth in_progress
 ```
 
 ### Scenario 2: Parallel Development on Multiple Features
