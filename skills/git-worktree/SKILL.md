@@ -92,17 +92,78 @@ Handle conflicts:
 - **Path exists**: Ask user if they want to use existing directory or choose different name
 - **Branch exists**: Offer to use existing branch or create with different name
 
-### 5. Create Worktree
+### 5. Create Worktree on Feature Branch
+
+**CRITICAL: Always create a NEW feature branch from main, NEVER work on main directly**
 
 ```bash
-# Create worktree with new branch
-git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH"
+# Ensure we're starting from latest main
+git fetch origin main 2>/dev/null || true
 
-# Or use existing branch
+# Create worktree with NEW branch based on main
+# This creates a fresh branch from main for isolated work
+git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" main
+
+# NEVER use: git worktree add "$WORKTREE_PATH" main
+# That would check out main in the worktree, which defeats isolation!
+```
+
+**If branch already exists** (from previous work):
+```bash
+# User chose to reuse existing branch
 git worktree add "$WORKTREE_PATH" "$BRANCH_NAME"
 ```
 
-### 6. Create Skill Marker
+### 6. Initialize Worktree
+
+After creating the worktree, run initialization steps to set it up like CI:
+
+```bash
+# Change to worktree directory
+cd "$WORKTREE_PATH"
+
+# Initialize based on project type (detect from files)
+if [ -f "package.json" ]; then
+  echo "📦 Installing Node dependencies..."
+  npm install || yarn install
+elif [ -f "requirements.txt" ]; then
+  echo "🐍 Installing Python dependencies..."
+  pip install -r requirements.txt
+elif [ -f "Gemfile" ]; then
+  echo "💎 Installing Ruby dependencies..."
+  bundle install
+elif [ -f "go.mod" ]; then
+  echo "🔷 Installing Go dependencies..."
+  go mod download
+fi
+
+# Copy environment files if they exist (don't commit these!)
+if [ -f "../.env.example" ] && [ ! -f ".env" ]; then
+  echo "📝 Copying .env.example to .env..."
+  cp ../.env.example .env
+fi
+
+# Run build if needed
+if [ -f "package.json" ] && grep -q "\"build\":" package.json; then
+  echo "🔨 Running build..."
+  npm run build 2>/dev/null || true
+fi
+
+# Return to base directory
+cd -
+```
+
+**Show initialization status**:
+```
+🔧 Initializing worktree...
+  ✓ Dependencies installed
+  ✓ Environment configured
+  ✓ Build completed
+
+Worktree is ready for development!
+```
+
+### 7. Create Skill Marker
 
 Mark this worktree as created by the skill:
 
@@ -113,7 +174,7 @@ mkdir -p ".git/worktrees/${WORKTREE_NAME}"
 touch ".git/worktrees/${WORKTREE_NAME}/skill-created"
 ```
 
-### 7. Update Supervisor Metadata
+### 8. Update Supervisor Metadata
 
 Load or create `.git/worktree-supervisor.json`:
 
@@ -134,26 +195,28 @@ Load or create `.git/worktree-supervisor.json`:
 
 Use the Write tool to update this file.
 
-### 8. Show Success Message
+### 9. Show Success Message
 
 ```
 ✅ Created worktree: feature-name
 
 📁 Location: /Users/mshen/Projects/conductor_files-feature-name/
-🌿 Branch: feature/feature-name
+🌿 Branch: feature/feature-name (created from main)
 📋 Task: Implement JWT authentication
 📊 Status: not_started
+🔧 Initialized: Dependencies installed, ready for development
 
 Next steps:
 1. Open a new terminal or Claude Code session
 2. cd /Users/mshen/Projects/conductor_files-feature-name/
 3. Start working on the feature in isolation
+4. Run tests to verify: npm test (or your test command)
 
 Track progress with: /git-worktree status
 Update status with: /git-worktree update feature-name $STATUS
 ```
 
-### 9. Offer Plan Mode
+### 10. Offer Plan Mode
 
 After showing the success message, ask the user if they want to create an implementation plan:
 
@@ -638,6 +701,43 @@ This may have been removed manually. Clean up metadata? (y/N)
 - **Check supervisor**: Before creating new worktrees, check what's already in progress
 - **Coordinate merges**: Avoid conflicts by knowing what others are working on
 
+### Testing and Verification
+
+**Each worktree should run tests like CI does:**
+
+1. **After initialization**, verify setup:
+   ```bash
+   cd ../conductor_files-feature-name/
+   npm test  # or your test command
+   ```
+
+2. **Before committing**, run tests:
+   ```bash
+   # Run same tests as CI would run
+   npm test          # Unit tests
+   npm run lint      # Linting
+   npm run build     # Build verification
+   ```
+
+3. **Test commands by project type**:
+   - **Node.js**: `npm test`, `npm run test:ci`
+   - **Python**: `pytest`, `python -m pytest`
+   - **Ruby**: `bundle exec rspec`
+   - **Go**: `go test ./...`
+
+4. **Check CI configuration** for exact commands:
+   - Look at `.github/workflows/*.yml` for test steps
+   - Run the same commands locally in the worktree
+   - Ensure all tests pass before merging
+
+5. **Common test issues in worktrees**:
+   - Dependencies not installed → Run `npm install` (or equivalent)
+   - Config missing → Copy `.env.example` to `.env`
+   - Build artifacts missing → Run build command
+   - Database not set up → Run migrations or seed data
+
+**Goal**: Tests in worktree should pass exactly like they would in CI
+
 ### When to Use Worktrees
 ✅ **Good use cases:**
 - Parallel feature development
@@ -747,6 +847,16 @@ cd ../conductor_files/  # Back to main
 ## Important Notes
 
 ### Git Behavior
+
+**⚠️ CRITICAL - Branch Isolation:**
+- **Each worktree MUST be on its own feature branch**, never on main
+- **Main branch is only for the base directory** - it's your stable reference
+- **Worktrees are created FROM main** but work happens on feature branches
+- **This ensures complete isolation** - work in one worktree doesn't affect main or other worktrees
+- **When creating**: Use `git worktree add -b feature/name path main` (creates new branch from main)
+- **Never use**: `git worktree add path main` (would checkout main, breaking isolation!)
+
+**Other Git Behavior:**
 - **Worktrees share .git directory**: All worktrees share the same repository metadata
 - **Cannot checkout same branch twice**: Each worktree must have a unique branch
 - **Submodules work**: Submodules are supported but need separate `git submodule update` in each worktree
