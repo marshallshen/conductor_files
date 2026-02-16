@@ -38,7 +38,7 @@ The installer will:
 
 You get:
 - **Skills**: `/save-context`, `/resume-context` - Save and resume work sessions
-- **Agents**: `blog-writer`, `unit-tester`, `security-reviewer`, `ui-ux-reviewer`
+- **Agents**: `blog-writer`, `tech-doc-writer`, `unit-tester`, `security-reviewer`, `ui-ux-reviewer`
 - **Hooks**: Auto-formatting, security blocks, quality gates (optional)
 
 Everything works immediately with Claude Code
