@@ -77,7 +77,24 @@ Write a concise but complete context document. Use this structure:
 Last updated: [Current date/time]
 ```
 
-### 4. Write to TASK.md
+### 4. Ensure TASK.md is in .gitignore
+
+Before saving, ensure TASK.md is in .gitignore to prevent accidental commits:
+
+```bash
+# Check if .gitignore exists and if TASK.md is already in it
+if [ -f .gitignore ]; then
+  if ! grep -q "^TASK\.md$" .gitignore; then
+    echo "TASK.md" >> .gitignore
+    echo "✓ Added TASK.md to .gitignore"
+  fi
+else
+  echo "TASK.md" > .gitignore
+  echo "✓ Created .gitignore and added TASK.md"
+fi
+```
+
+### 5. Write to TASK.md
 
 Save the context to `TASK.md` in the current working directory:
 
@@ -88,7 +105,7 @@ pwd
 
 Then use the Write tool to create `./TASK.md` with your summary.
 
-### 5. Confirm with User
+### 6. Confirm with User
 
 Show the user what was saved and confirm:
 - File location (full path to TASK.md)
@@ -165,7 +182,7 @@ Last updated: 2026-02-14 15:30
 
 - **Privacy**: Don't save sensitive data (passwords, API keys, secrets)
 - **Location**: Always save to `./TASK.md` in the current working directory
-- **Version control**: Users may want to add TASK.md to .gitignore if it's personal notes
+- **Version control**: TASK.md is automatically added to .gitignore to prevent accidental commits
 - **Overwriting**: Warn user if TASK.md already exists before overwriting
 
 ---

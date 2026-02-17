@@ -28,8 +28,22 @@ ls -la TASK.md 2>/dev/null || echo "No TASK.md found"
 
 If TASK.md exists:
 
-1. **Read the file** using the Read tool
-2. **Parse the content** to understand:
+1. **Ensure TASK.md is in .gitignore** to prevent accidental commits:
+   ```bash
+   # Check if .gitignore exists and if TASK.md is already in it
+   if [ -f .gitignore ]; then
+     if ! grep -q "^TASK\.md$" .gitignore; then
+       echo "TASK.md" >> .gitignore
+       echo "✓ Added TASK.md to .gitignore"
+     fi
+   else
+     echo "TASK.md" > .gitignore
+     echo "✓ Created .gitignore and added TASK.md"
+   fi
+   ```
+
+2. **Read the file** using the Read tool
+3. **Parse the content** to understand:
    - What was being worked on
    - Current progress status
    - Next steps planned
@@ -37,7 +51,7 @@ If TASK.md exists:
    - Important context and decisions
    - Any blockers or questions
 
-3. **Present summary to user** in a clear format:
+4. **Present summary to user** in a clear format:
 
 ```
 📋 Resuming Previous Work
@@ -61,9 +75,9 @@ Key Files:
 Ready to continue? Let me know which next step to tackle first.
 ```
 
-4. **Offer to start** on the next step or ask user what they want to focus on
+5. **Offer to start** on the next step or ask user what they want to focus on
 
-5. **Verify context is current** by checking:
+6. **Verify context is current** by checking:
    - Do the mentioned files still exist?
    - Has git state changed significantly?
    - Is the context still relevant?
@@ -219,7 +233,7 @@ Would you like to:
 - **TASK.md location**: Always in current working directory (`./TASK.md`)
 - **Multiple projects**: Each project can have its own TASK.md
 - **Privacy**: TASK.md might contain sensitive notes - don't share externally
-- **Git tracking**: TASK.md may or may not be in git (user's choice)
+- **Git tracking**: TASK.md is automatically added to .gitignore to prevent accidental commits
 
 ---
 
