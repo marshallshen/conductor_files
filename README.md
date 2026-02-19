@@ -37,7 +37,7 @@ The installer will:
 3. **Create symlinks** from `~/.claude/` to your conductor_files
 
 You get:
-- **Skills**: `/save-context`, `/resume-context` - Save and resume work sessions
+- **Skills**: `/save-context`, `/resume-context` - Save and resume work sessions; `/git-worktree` - Parallel feature development; `/document-query-patterns` - Document data query patterns
 - **Agents**: `blog-writer`, `tech-doc-writer`, `unit-tester`, `security-reviewer`, `ui-ux-reviewer`
 - **Hooks**: Auto-formatting, security blocks, quality gates (optional)
 
